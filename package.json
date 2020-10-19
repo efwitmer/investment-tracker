@@ -1,0 +1,24 @@
+{
+  "name": "investment-tracker",
+  "version": "1.0.0",
+  "description": "personal investment tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/efwitmer/investment-tracker.git"
+  },
+  "author": "Emma Witmer and Nat Witmer",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/efwitmer/investment-tracker/issues"
+  },
+  "homepage": "https://github.com/efwitmer/investment-tracker#readme",
+  "dependencies": {
+    "@hapi/hapi": "^20.0.1",
+    "@hapi/inert": "^6.0.3",
+    "mysql": "^2.18.1"
+  }
+}
