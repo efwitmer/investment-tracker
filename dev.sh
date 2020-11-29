@@ -10,4 +10,5 @@ export DB_PW=""
 export DB_USER="emma"
 export DB_NAME="practiceDB"
 
+
 node .
