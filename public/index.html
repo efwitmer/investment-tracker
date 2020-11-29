@@ -39,7 +39,7 @@
 
 <script>
 	$(document).ready( function () {
-		console.log("yeehaw")
+		console.log("about to run datatables...")
     	$('#table_id').DataTable();
 	});
 	
@@ -48,6 +48,8 @@
 		type: 'GET',
 		success: function(data) {
 			console.log('data: ', data);
+			var theData = data;
+			console.log("the date in a variable: ", theData);
 		},
 		error: function(error) {
 			console.log('error');
