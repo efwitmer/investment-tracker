@@ -57,7 +57,8 @@ const init = async () => {
 									price_per_unit,
 									quantity,
 									buy_sell,
-									field
+									industry,
+									price_per_unit * quantity AS cost
 								FROM investments
 								ORDER BY datetime DESC;`;
 				db.query(query, [], (err, results) => {
@@ -79,6 +80,7 @@ const init = async () => {
 			})
 		}
 	});
+
 
 	await server.start();
 	console.log(`Server running on %s`, server.info.uri);
