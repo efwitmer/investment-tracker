@@ -4,9 +4,15 @@
 	<title>investment-tracker</title>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.css">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css">
+
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css">
+
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
   
-	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.js"></script>
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+
+	<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
 
 
 
@@ -15,43 +21,76 @@
 
 <body>
 
+
 <div>
-	<table id="table_id" class="display">
+	<table id="table_id" class="display nowrap" style="width:100%">
 	    <thead>
 	        <tr>
-	            <th>asset</th>
-	            <th>asset type</th>
-	            <th>price</th>
-	            <th>date</th>
+	        	<th></th> <!-- extra <th> for the child rows button-->
+	            <th>Name</th>
+	            <th>Ticker</th>
+	            <th>Type</th>
+	            <th>Date and Time</th>
+	            <th>Fee</th>
+	            <th>Industry</th>
+	            <th>Price</th>
+	            <th>Quantity</th>
+	            <th>Buy/Sell</th>
+	            <th>Total Cost</th>
 	        </tr>
 	    </thead>
-	    <tbody>
-	        <tr>
-	            <td>Data 1</td>
-	            <td>Data 2</td>
-	            <td>Data 1</td>
-	            <td>Data 2</td>
-	        </tr>
+	    <tbody id="table_body">
+	        
 	    </tbody>
 	</table>
 </div>
 
 
+
+
 <script>
 	$(document).ready( function () {
-		console.log("yeehaw")
-    	$('#table_id').DataTable();
-	});
-	
-	$.ajax({
-		url: '/all_orders',
-		type: 'GET',
-		success: function(data) {
-			console.log('data: ', data);
-		},
-		error: function(error) {
-			console.log('error');
-		}
+		$.ajax({
+			url: '/all_orders',
+			type: 'GET',
+			success: function(data) {
+				console.log('data: ', data);
+				var dataBody = data.body;
+				console.log("the data body: ", dataBody);
+				var body = JSON.parse(dataBody);
+				console.log("body: ", body);
+				console.log(body[1]);
+				var i;
+				for (i = 0; i < body.length; i++) {
+					bodyObject = body[i];
+					console.log("bodyObject: ", bodyObject);
+					console.log("bodyObject.asset_type: ", bodyObject.asset_type);
+
+					document.getElementById("table_body").innerHTML += 
+						"<tr> <td></td><td>" + bodyObject.asset_name + "</td>" + "<td>" + bodyObject.ticker + "</td>" + "<td>" + bodyObject.asset_type + "</td>" + "<td>" + bodyObject.datetime + "</td>" + "<td>" + bodyObject.fee + "</td>" + "<td>" + bodyObject.industry + "</td>" + "<td>" + bodyObject.price_per_unit + "</td>" + "<td>" + bodyObject.quantity + "</td>" + "<td>" + bodyObject.buy_sell + "</td>" + "<td>" + bodyObject.cost + "</td>" + "</tr>";
+				}
+				// extra <td> for the child rows button ^^^
+				$(document).ready(function() {
+					$('#table_id').DataTable({
+						responsive: {
+							details: {
+								type: 'column'
+							}
+						},
+						columnDefs: [{
+							className: 'dtr-control',
+							orderable: false,
+							targets: 0
+						}],
+						order: [1, 'asc']
+					});
+				});
+				
+			},
+			error: function(error) {
+				console.log('error');
+			}
+		});
 	});
 </script>
 </body>
