@@ -31,17 +31,36 @@
 	            <th>Ticker</th>
 	            <th>Type</th>
 	            <th>Date and Time</th>
-	            <th>Fee</th>
-	            <th>Industry</th>
+	            <th>Percentage Gain/loss</th>
 	            <th>Price</th>
 	            <th>Quantity</th>
-	            <th>Buy/Sell</th>
 	            <th>Total Cost</th>
+	            <th>Current Price</th>
+	            <th>Current Value</th>
+	            <th>Industry</th>
+	            <th>Buy/Sell</th>
+	            <th>Fee</th>
 	        </tr>
 	    </thead>
 	    <tbody id="table_body">
 	        
 	    </tbody>
+	    <tfoot>
+	    		<th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	            <th></th>
+	    </tfoot>
 	</table>
 </div>
 
@@ -49,49 +68,188 @@
 
 
 <script>
+
 	$(document).ready( function () {
+		getRecords(function (err, results) {
+			if (err) {
+				console.log("error: ", err);
+			} else {
+				getTicker(results, function (err, pricing) {
+					if (err) {
+						console.log("err return from getTicker function: ", err);
+					} else {
+						var tableRecs = prepareTableRecs(results, pricing);
+						createTable(tableRecs);
+					}
+				});
+
+			}
+		})
+	});
+
+	function prepareTableRecs(tableRecs, pricing) {
+		for (var r = 0; r < pricing.length; r++) {
+			for (var q = 0; q < tableRecs.length; q++) {
+				if (tableRecs[q].ticker == pricing[r].ticker) {
+					tableRecs[q].currentPrice = pricing[r].c;
+					var currentValue = pricing[r].c * tableRecs[q].quantity;
+					tableRecs[q].currentValue = currentValue;
+				}
+			}
+		}
+
+		for (var i = 0; i < tableRecs.length; i++) {
+			var gainLoss = ( ( tableRecs[i].currentPrice - tableRecs[i].price_per_unit ) / tableRecs[i].price_per_unit ) * 100;
+			tableRecs[i].gainLoss = gainLoss;
+		}
+
+		console.log("tableRecs: ", tableRecs);
+		return tableRecs;
+	}
+
+	function getRecords(cb) {
 		$.ajax({
 			url: '/all_orders',
 			type: 'GET',
 			success: function(data) {
 				console.log('data: ', data);
 				var dataBody = data.body;
-				console.log("the data body: ", dataBody);
 				var body = JSON.parse(dataBody);
 				console.log("body: ", body);
 				console.log(body[1]);
-				var i;
-				for (i = 0; i < body.length; i++) {
-					bodyObject = body[i];
-					console.log("bodyObject: ", bodyObject);
-					console.log("bodyObject.asset_type: ", bodyObject.asset_type);
-
-					document.getElementById("table_body").innerHTML += 
-						"<tr> <td></td><td>" + bodyObject.asset_name + "</td>" + "<td>" + bodyObject.ticker + "</td>" + "<td>" + bodyObject.asset_type + "</td>" + "<td>" + bodyObject.datetime + "</td>" + "<td>" + bodyObject.fee + "</td>" + "<td>" + bodyObject.industry + "</td>" + "<td>" + bodyObject.price_per_unit + "</td>" + "<td>" + bodyObject.quantity + "</td>" + "<td>" + bodyObject.buy_sell + "</td>" + "<td>" + bodyObject.cost + "</td>" + "</tr>";
-				}
-				// extra <td> for the child rows button ^^^
-				$(document).ready(function() {
-					$('#table_id').DataTable({
-						responsive: {
-							details: {
-								type: 'column'
-							}
-						},
-						columnDefs: [{
-							className: 'dtr-control',
-							orderable: false,
-							targets: 0
-						}],
-						order: [1, 'asc']
-					});
-				});
+				cb(null, body);
 				
 			},
 			error: function(error) {
 				console.log('error');
+				cb(error);
 			}
 		});
-	});
+	}
+
+
+	function createTable(body) {
+		var i;
+		for (i = 0; i < body.length; i++) {
+			bodyObject = body[i];
+			document.getElementById("table_body").innerHTML += 
+				"<tr> <td></td><td>" + bodyObject.asset_name + "</td>" + "<td>" + bodyObject.ticker + "</td>" + "<td>" + bodyObject.asset_type + "</td>" + "<td>" + bodyObject.datetime + "</td>" + "<td>" + bodyObject.gainLoss.toFixed(2) + "</td>" + "<td>" + bodyObject.price_per_unit + "</td>" + "<td>" + bodyObject.quantity + "</td>" + "<td>" + bodyObject.cost.toFixed(2) + "</td>" + "<td>" + bodyObject.currentPrice + "</td>" + "<td>" + bodyObject.currentValue + "</td>" + "<td>" + bodyObject.industry + "</td>" + "<td>" + bodyObject.buy_sell + "</td>" + "<td>" + bodyObject.fee + "</td>" + "</tr>";
+		}
+		// extra <td> for the child rows button ^^^
+		$(document).ready(function() {
+			$('#table_id').DataTable({
+				
+				responsive: {
+					details: {
+						type: 'column'
+					}
+				},
+				columnDefs: [{
+					className: 'dtr-control',
+					orderable: false,
+					targets: 0
+				}],
+				order: [1, 'asc'],
+				"footerCallback": function ( row, data, start, end, display ) {
+		            var api = this.api(), data;
+		 
+		            // Removing the formatting to get integer data for summation
+		            var intVal = function ( i ) {
+		                return typeof i === 'string' ?
+		                    i.replace(/[\$,]/g, '')*1 :
+		                    typeof i === 'number' ?
+		                        i : 0;
+		            };
+
+		            var percentageTotal = api
+		                .column( 5, { page: 'current'} )
+		                .data()
+		                .reduce( function (a, b) {
+		                    return intVal(a) + intVal(b);
+		             	}, 0 );
+		 
+			        var priceTotal = api
+		                .column( 6, { page: 'current'} )
+		                .data()
+		                .reduce( function (a, b) {
+		                    return intVal(a) + intVal(b);
+		             	}, 0 );
+							
+				    var quantityTotal = api
+		                .column( 7, { page: 'current'} )
+		                .data()
+		                .reduce( function (a, b) {
+		                    return intVal(a) + intVal(b);
+		                }, 0 );
+							
+		            var costTotal = api
+		                .column( 8, { page: 'current'} )
+		                .data()
+		                .reduce( function (a, b) {
+		                    return intVal(a) + intVal(b);
+		                }, 0 );
+						
+				     var currentPriceTotal = api
+		                .column( 9, { page: 'current'} )
+		                .data()
+		                .reduce( function (a, b) {
+		                    return intVal(a) + intVal(b);
+		                }, 0 );
+						
+		     		var currentValueTotal = api
+		                .column( 10, { page: 'current'} )
+		                .data()
+		                .reduce( function (a, b) {
+		                    return intVal(a) + intVal(b);
+		                }, 0 );
+		 			
+		            // rounding all numbers
+		            percentageTotal = percentageTotal.toFixed(2);
+		            priceTotal = priceTotal.toFixed(2);
+		            quantityTotal = quantityTotal.toFixed(2);
+		            costTotal = costTotal.toFixed(2);
+		            currentPriceTotal = currentPriceTotal.toFixed(2);
+		            currentValueTotal = currentValueTotal.toFixed(2);
+
+		            // Update footer
+		            $( api.column( 0 ).footer() ).html('Total');
+		            	$( api.column( 5 ).footer() ).html(percentageTotal)
+			            $( api.column( 6 ).footer() ).html(priceTotal);
+			            $( api.column( 7 ).footer() ).html(quantityTotal);
+			            $( api.column( 8 ).footer() ).html(costTotal);
+			            $( api.column( 9 ).footer() ).html(currentPriceTotal);
+			            $( api.column( 10 ).footer() ).html(currentValueTotal);
+		        }
+			});
+		});	
+	}
+
+
+	function getTicker(orders, cb) {
+		console.log("getTicker() is getting hit");
+		var allTickers = [];
+		for (var p = 0; p < orders.length; p++) {
+			var body = orders[p];
+			allTickers.push(body.ticker);
+		}
+		console.log("allTickers: ", allTickers);
+
+		$.ajax({
+			url: '/all_tickers',
+			type: 'POST',
+			data: {tickers: JSON.stringify(allTickers)},
+			success: function(results) {
+				console.log('results: ', results);
+				cb(null, results);
+				
+			},
+			error: function(error) {
+				console.log('error: ', error);
+				cb(error);
+			}
+		});
+	}
+
 </script>
 </body>
 </html>
