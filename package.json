@@ -19,6 +19,8 @@
   "dependencies": {
     "@hapi/hapi": "^20.0.1",
     "@hapi/inert": "^6.0.3",
-    "mysql": "^2.18.1"
+    "mysql": "^2.18.1",
+    "node-fetch": "^2.6.1",
+    "request": "^2.88.2"
   }
 }
